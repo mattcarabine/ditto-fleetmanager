@@ -1,4 +1,6 @@
 import { useStore } from '../store/store';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function ConfigureSettings() {
   const { 
@@ -29,13 +31,13 @@ export default function ConfigureSettings() {
       <div className="settings-section">
         <h3>Device Settings</h3>
         <div className="setting-item">
-          <label htmlFor="staleness-time">
+          <Label htmlFor="staleness-time">
             Device Staleness Time (seconds)
             <span className="setting-description">
               How long a device can be offline before being considered stale
             </span>
-          </label>
-          <input
+          </Label>
+          <Input
             id="staleness-time"
             type="number"
             min="0"
@@ -48,13 +50,13 @@ export default function ConfigureSettings() {
       <div className="settings-section">
         <h3>Query Settings</h3>
         <div className="setting-item">
-          <label htmlFor="refresh-interval">
+          <Label htmlFor="refresh-interval">
             Remote Query Refresh Interval (seconds)
             <span className="setting-description">
               How often to refresh remote queries (minimum 1 second)
             </span>
-          </label>
-          <input
+          </Label>
+          <Input
             id="refresh-interval"
             type="number"
             min="1"

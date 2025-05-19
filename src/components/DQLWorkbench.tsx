@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { usePerPeerQuery } from '../contexts/RemoteQuery';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
 
 interface Props {
   peerId?: string;
@@ -33,9 +36,7 @@ const DQLQueryWorkbench: React.FC<Props> = ({ peerId }) => {
       <h2 className="text-lg font-medium text-gray-900 mb-4">DQL Query Workbench</h2>
       <div className="space-y-4">
         <div>
-          <label htmlFor="query" className="block text-sm font-medium text-gray-700 mb-2">
-            Enter DQL Query
-          </label>
+          <Label htmlFor="query">Enter DQL Query</Label>
           <div className="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
             <Editor
               height="200px"
@@ -69,14 +70,10 @@ const DQLQueryWorkbench: React.FC<Props> = ({ peerId }) => {
           </p>
         </div>
         <div>
-          <button
+          <Button
             onClick={executeQuery}
             disabled={isLoading || !query.trim()}
-            className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white transition-colors duration-200 ${
-              isLoading || !query.trim()
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
-            }`}
+            variant={isLoading || !query.trim() ? 'outline' : 'default'}
           >
             {isLoading ? (
               <>
@@ -89,19 +86,13 @@ const DQLQueryWorkbench: React.FC<Props> = ({ peerId }) => {
             ) : (
               'Execute Query'
             )}
-          </button>
+          </Button>
         </div>
         {error && (
-          <div className="rounded-lg bg-red-50 p-4 border border-red-100">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>{error instanceof Error ? error.message : String(error)}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error instanceof Error ? error.message : String(error)}</AlertDescription>
+          </Alert>
         )}
         {queryResult && (
           <div className="mt-4">

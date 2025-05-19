@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../store/store';
+import type { Group } from '../store/store';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default function ConfigureGroups() {
   const { groups, addGroup, deleteGroup } = useStore();
@@ -8,41 +11,19 @@ export default function ConfigureGroups() {
 
   const handleAddGroup = () => {
     if (newGroupName.trim() && newGroupId.trim()) {
-      addGroup({name: newGroupName, _id: newGroupId});
+      addGroup({ name: newGroupName, _id: newGroupId });
       setNewGroupName('');
       setNewGroupId('');
     }
   };
 
-  const handleDeleteGroup = (group: { name: string, _id: string }) => {
-    if (window.confirm(`Are you sure you want to delete the group "${group.name}"?`)) {
-      deleteGroup(group);
-    }
-  };
-
   const renderGroupsList = () => {
-    if (groups.length === 0) {
-      return <p>No groups configured yet</p>;
-    }
-
-    return (
-      <ul>
-        {groups.map((group) => (
-          <li key={group._id} className="group-item">
-            <div className="group-info">
-              <span className="group-name">{group.name}</span>
-              <span className="group-id">({group._id})</span>
-            </div>
-            <button 
-              onClick={() => handleDeleteGroup(group)}
-              className="delete-button"
-            >
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
-    );
+    return groups.map((group: Group) => (
+      <div key={group._id} className="group-item">
+        <span>{group.name}</span>
+        <Button variant="destructive" onClick={() => deleteGroup(group)}>Delete</Button>
+      </div>
+    ));
   };
 
   return (
@@ -51,28 +32,25 @@ export default function ConfigureGroups() {
       
       <div className="add-group-section">
         <div className="input-group">
-          <input
+          <Input
             type="text"
             value={newGroupName}
             onChange={(e) => setNewGroupName(e.target.value)}
             placeholder="Enter user-friendly name"
-            className="group-input"
           />
-          <input
+          <Input
             type="text"
             value={newGroupId}
             onChange={(e) => setNewGroupId(e.target.value)}
             placeholder="Enter metadata field name"
-            className="group-input"
           />
         </div>
-        <button 
+        <Button 
           onClick={handleAddGroup} 
-          className="add-button"
           disabled={!newGroupName.trim() || !newGroupId.trim()}
         >
           Add Group
-        </button>
+        </Button>
       </div>
 
       <div className="groups-list">
