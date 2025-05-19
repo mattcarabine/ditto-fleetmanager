@@ -1,0 +1,46 @@
+{
+  "hash": "2d489c54",
+  "configHash": "273553ae",
+  "lockfileHash": "9c38a91c",
+  "browserHash": "28463f63",
+  "optimized": {
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "828ff334",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "7652f7cc",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "16b8cdd9",
+      "needsInterop": true
+    },
+    "@dittolive/ditto": {
+      "src": "../../node_modules/@dittolive/ditto/web/ditto.es6.js",
+      "file": "@dittolive_ditto.js",
+      "fileHash": "778d9b33",
+      "needsInterop": false
+    },
+    "zustand": {
+      "src": "../../node_modules/zustand/esm/index.mjs",
+      "file": "zustand.js",
+      "fileHash": "8e6169df",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-KS2M7ZJI": {
+      "file": "chunk-KS2M7ZJI.js"
+    },
+    "chunk-5WRI5ZAA": {
+      "file": "chunk-5WRI5ZAA.js"
+    }
+  }
+}
