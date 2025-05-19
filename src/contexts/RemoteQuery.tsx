@@ -19,8 +19,8 @@ interface PresenceData {
   v: number;
 }
 
-const API_ENDPOINT = '';
-const AUTH_TOKEN = '';
+const API_ENDPOINT = import.meta.env.DITTO_API_ENDPOINT;
+const AUTH_TOKEN = import.meta.env.DITTO_API_TOKEN;
 
 export interface QueryResult {
   error: Record<string, any>;
