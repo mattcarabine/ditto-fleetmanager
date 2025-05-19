@@ -1,39 +1,15 @@
 import { useParams } from 'react-router-dom';
 import { useStore } from '../store/store';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import QueryWorkbench from '../components/DQLWorkbench';
 import PresenceGraph from '../components/PresenceGraph';
-import { useDitto } from '../contexts/RemoteQuery';
+import { usePeerOnline, usePresenceData } from '../contexts/RemoteQuery';
 
 export default function Peer() {
   const { peerId } = useParams();
   const { peers } = useStore();
-  const { getPresenceData, checkPeerOnline } = useDitto();
-  const [presence, setPresence] = useState<any[]>([]);
-  const [isOnline, setIsOnline] = useState<boolean>(false);
-
-  useEffect(() => {
-    const fetchPresence = async () => {
-      if (peerId) {
-        const data = await getPresenceData(peerId);
-        setPresence(data);
-      }
-    };
-    fetchPresence();
-  }, [peerId]);
-
-  useEffect(() => {
-    const checkOnline = async () => {
-      if (peerId) {
-        const online = await checkPeerOnline(peerId);
-        setIsOnline(online);
-      }
-    };
-    checkOnline();
-    // Check online status every 30 seconds
-    const interval = setInterval(checkOnline, 30000);
-    return () => clearInterval(interval);
-  }, [peerId, checkPeerOnline]);
+  const { data: isOnline, isLoading: isOnlineLoading } = usePeerOnline(peerId || '');
+  const { data: presence = [], isLoading: isPresenceLoading } = usePresenceData(peerId || '');
 
   const peer = useMemo(
     () => peers.find(p => p._id === peerId),
@@ -59,7 +35,7 @@ export default function Peer() {
             marginLeft: '8px',
             fontWeight: 'bold'
           }}>
-            {isOnline ? 'Online' : 'Offline'}
+            {isOnlineLoading ? 'Checking...' : (isOnline ? 'Online' : 'Offline')}
           </span>
         </p>
         
@@ -73,13 +49,17 @@ export default function Peer() {
 
       {isOnline ? (
         <>
+         <div className="presence-graph-section">
+            <h3>Presence Graph</h3>
+            {isPresenceLoading ? (
+              <div>Loading presence data...</div>
+            ) : (
+              <PresenceGraph presence={presence} />
+            )}
+          </div>
           <div className="query-workbench-section">
             <h3>Query Workbench</h3>
             <QueryWorkbench peerId={peer._id} />
-          </div>
-          <div className="presence-graph-section">
-            <h3>Presence Graph</h3>
-            <PresenceGraph presence={presence} />
           </div>
         </>
       ) : (

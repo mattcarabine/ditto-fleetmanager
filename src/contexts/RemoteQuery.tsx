@@ -1,6 +1,7 @@
 import React, { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import { decodeRecursively } from '../utils/utils';
+import { useQuery, useQueryClient, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 interface DittoContextType {
   checkPeerOnline: (peerId: string) => Promise<boolean>;
@@ -19,7 +20,7 @@ interface PresenceData {
   v: number;
 }
 
-const API_ENDPOINT = import.meta.env.DITTO_API_ENDPOINT;
+const API_ENDPOINT = `${import.meta.env.DITTO_API_ENDPOINT}/api/v5/sync/remote_execute`;
 const AUTH_TOKEN = import.meta.env.DITTO_API_TOKEN;
 
 export interface QueryResult {
@@ -102,7 +103,6 @@ class DittoService {
       }
     }
 
-    console.log(decodedResult);
     return decodedResult;
   }
 
@@ -122,7 +122,9 @@ class DittoService {
 
     return result;
   }
-} 
+}
+
+const dittoService = new DittoService();
 
 const DittoRemoteQueryContext = createContext<DittoContextType | undefined>(undefined);
 
@@ -131,18 +133,45 @@ interface RemoteQueryProviderProps {
 }
 
 export const RemoteQueryProvider: React.FC<RemoteQueryProviderProps> = ({ children }) => {
-  const dittoService = new DittoService();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchInterval: 5000, // Refetch every 5 seconds
+        staleTime: 3000, // Consider data stale after 3 seconds
+      },
+    },
+  });
 
   const value = {
-    checkPeerOnline: dittoService.checkPeerOnline.bind(dittoService),
-    getPresenceData: dittoService.getPresenceData.bind(dittoService),
-    executePerPeerQuery: dittoService.executePerPeerQuery.bind(dittoService),
+    checkPeerOnline: async (peerId: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: ['peerOnline', peerId],
+        queryFn: () => dittoService.checkPeerOnline(peerId),
+      });
+      return result;
+    },
+    getPresenceData: async (peerId: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: ['presence', peerId],
+        queryFn: () => dittoService.getPresenceData(peerId),
+      });
+      return result;
+    },
+    executePerPeerQuery: async (peerId: string | undefined, query: string) => {
+      const result = await queryClient.fetchQuery({
+        queryKey: ['query', peerId, query],
+        queryFn: () => dittoService.executePerPeerQuery(peerId, query),
+      });
+      return result;
+    },
   };
 
   return (
-    <DittoRemoteQueryContext.Provider value={value}>
-      {children}
-    </DittoRemoteQueryContext.Provider>
+    <QueryClientProvider client={queryClient}>
+      <DittoRemoteQueryContext.Provider value={value}>
+        {children}
+      </DittoRemoteQueryContext.Provider>
+    </QueryClientProvider>
   );
 };
 
@@ -152,4 +181,27 @@ export const useDitto = () => {
     throw new Error('useDitto must be used within a DittoProvider');
   }
   return context;
+};
+
+// Custom hooks for direct React Query usage
+export const usePeerOnline = (peerId: string) => {
+  return useQuery({
+    queryKey: ['peerOnline', peerId],
+    queryFn: () => dittoService.checkPeerOnline(peerId),
+  });
+};
+
+export const usePresenceData = (peerId: string) => {
+  return useQuery({
+    queryKey: ['presence', peerId],
+    queryFn: () => dittoService.getPresenceData(peerId),
+  });
+};
+
+export const usePerPeerQuery = (peerId: string | undefined, query: string) => {
+  return useQuery({
+    queryKey: ['query', peerId, query],
+    queryFn: () => dittoService.executePerPeerQuery(peerId, query),
+    enabled: !!query, // Only run query if query string is provided
+  });
 }; 

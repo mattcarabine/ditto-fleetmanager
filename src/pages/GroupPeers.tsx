@@ -1,75 +1,51 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../store/store';
-import { useMemo, useState, useEffect } from 'react';
-import { useDitto } from '../contexts/RemoteQuery';
+import { useMemo } from 'react';
+import { usePeerOnline, usePresenceData } from '../contexts/RemoteQuery';
 import PresenceGraph from '../components/PresenceGraph';
+import type { Peer } from '../types/peer';
 
 export default function GroupPeers() {
   const { groupName, metadataValue } = useParams();
   const navigate = useNavigate();
   const { peers } = useStore();
-  const { checkPeerOnline, getPresenceData } = useDitto();
-  const [onlineStatus, setOnlineStatus] = useState<Record<string, boolean>>({});
-  const [presence, setPresence] = useState<any[]>([]);
   
   const filteredPeers = useMemo(
     () => {
       if (!groupName) return [];
       return peers.filter(peer => 
         peer.metadata && 
-        peer.metadata[groupName] === metadataValue
+        groupName in peer.metadata &&
+        peer.metadata[groupName as keyof typeof peer.metadata] === metadataValue
       );
     },
     [peers, groupName, metadataValue]
   );
 
-  useEffect(() => {
-    const chosenPeer = filteredPeers[0];
-    const fetchPresence = async () => {
-      if (chosenPeer) {
-        const data = await getPresenceData(chosenPeer._id);
-        setPresence(data);
-      }
-    };
-    fetchPresence();
-  }, [filteredPeers]);
-
-
-  useEffect(() => {
-    const checkPeersOnline = async () => {
-      const status: Record<string, boolean> = {};
-      for (const peer of filteredPeers) {
-        status[peer._id] = await checkPeerOnline(peer._id);
-      }
-      setOnlineStatus(status);
-    };
-
-    checkPeersOnline();
-    // Check online status every 30 seconds
-    const interval = setInterval(checkPeersOnline, 30000);
-    return () => clearInterval(interval);
-  }, [filteredPeers, checkPeerOnline]);
+  const chosenPeer = filteredPeers[0];
+  const { data: presence = [] } = usePresenceData(chosenPeer?._id || '');
+  
+  const onlineStatuses: { peerId: string; isOnline: boolean }[] = [];
 
   const handlePeerClick = (peerId: string) => {
     navigate(`/peer/${peerId}`);
   };
 
-  const getTotalDocuments = (peer: any) => {
+  const getTotalDocuments = (peer: Peer) => {
     if (!peer.store?.user_collections) return 0;
-    return Object.values(peer.store.user_collections).reduce((total: number, collection: any) => {
+    return Object.values(peer.store.user_collections).reduce((total: number, collection) => {
       return total + (collection.num_docs || 0);
     }, 0);
   };
 
   return (
     <div className="group-peers-page">
-      <h2>Peers in Group: {groupName}</h2>
-      <h3>Metadata Value: {metadataValue}</h3>
+      <h2>{groupName}: {metadataValue}</h2>
       
       <div className="presence-graph-section">
-            <h3>Presence Graph</h3>
-            <PresenceGraph presence={presence} />
-          </div>
+        <h3>Presence Graph</h3>
+        <PresenceGraph presence={presence} />
+      </div>
           
       <div className="peers-table">
         <table>
@@ -83,27 +59,30 @@ export default function GroupPeers() {
             </tr>
           </thead>
           <tbody>
-            {filteredPeers.map((peer) => (
-              <tr 
-                key={peer._id}
-                onClick={() => handlePeerClick(peer._id)}
-                style={{ cursor: 'pointer' }}
-                className="peer-row"
-              >
-                <td>{peer.device_name || peer._id}</td>
-                <td>{new Date(peer.last_updated_at).toLocaleString()}</td>
-                <td>{peer.connections_by_transport.WebSocket}</td>
-                <td>
-                  <span style={{ 
-                    color: onlineStatus[peer._id] ? '#22c55e' : '#ef4444',
-                    fontWeight: 'bold'
-                  }}>
-                    {onlineStatus[peer._id] ? 'Online' : 'Offline'}
-                  </span>
-                </td>
-                <td>{getTotalDocuments(peer)}</td>
-              </tr>
-            ))}
+            {filteredPeers.map((peer) => {
+              const onlineStatus = onlineStatuses.find(status => status.peerId === peer._id);
+              return (
+                <tr 
+                  key={peer._id}
+                  onClick={() => handlePeerClick(peer._id)}
+                  style={{ cursor: 'pointer' }}
+                  className="peer-row"
+                >
+                  <td>{peer.device_name || peer._id}</td>
+                  <td>{new Date(peer.last_updated_at).toLocaleString()}</td>
+                  <td>{peer.connections_by_transport.WebSocket}</td>
+                  <td>
+                    <span style={{ 
+                      color: onlineStatus?.isOnline ? '#22c55e' : '#ef4444',
+                      fontWeight: 'bold'
+                    }}>
+                      {onlineStatus?.isOnline ? 'Online' : 'Offline'}
+                    </span>
+                  </td>
+                  <td>{getTotalDocuments(peer)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

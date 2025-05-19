@@ -12,6 +12,7 @@
   "dependencies": {
     "@dittolive/ditto": "4.11.0-preview.2",
     "@monaco-editor/react": "^4.7.0",
+    "@tanstack/react-query": "^5.76.1",
     "@types/node": "^22.15.18",
     "cbor2": "^2.0.0",
     "react": "^19.1.0",

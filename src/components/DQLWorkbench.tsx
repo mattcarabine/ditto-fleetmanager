@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
-import { useDitto } from '../contexts/RemoteQuery';
+import { usePerPeerQuery } from '../contexts/RemoteQuery';
 
 interface Props {
   peerId?: string;
@@ -8,28 +8,24 @@ interface Props {
 
 const DQLQueryWorkbench: React.FC<Props> = ({ peerId }) => {
   const [query, setQuery] = useState('');
-  const [queryResult, setQueryResult] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { executePerPeerQuery } = useDitto();
+  const [executedQuery, setExecutedQuery] = useState('');
+  const { data: queryResult, isLoading, error, refetch } = usePerPeerQuery(peerId, executedQuery);
 
-  const executeQuery = async () => {
+  const executeQuery = () => {
     if (!query.trim()) return;
-    
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await executePerPeerQuery(peerId, query);
-      setQueryResult(result);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'An error occurred');
-    } finally {
-      setIsLoading(false);
-    }
+    setExecutedQuery(query);
+    refetch();
   };
 
   const handleEditorChange = (value: string | undefined) => {
     setQuery(value || '');
+  };
+
+  const handleEditorKeyDown = (event: any) => {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      executeQuery();
+    }
   };
 
   return (
@@ -47,6 +43,9 @@ const DQLQueryWorkbench: React.FC<Props> = ({ peerId }) => {
               theme="vs-light"
               value={query}
               onChange={handleEditorChange}
+              onMount={(editor) => {
+                editor.onKeyDown(handleEditorKeyDown);
+              }}
               options={{
                 minimap: { enabled: false },
                 fontSize: 14,
@@ -65,6 +64,9 @@ const DQLQueryWorkbench: React.FC<Props> = ({ peerId }) => {
               Query will be executed in context of peer: <span className="font-mono text-gray-700">{peerId}</span>
             </p>
           )}
+          <p className="mt-2 text-sm text-gray-500">
+            Press Ctrl+Enter or Cmd+Enter to execute the query
+          </p>
         </div>
         <div>
           <button
@@ -95,7 +97,7 @@ const DQLQueryWorkbench: React.FC<Props> = ({ peerId }) => {
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">Error</h3>
                 <div className="mt-2 text-sm text-red-700">
-                  <p>{error}</p>
+                  <p>{error instanceof Error ? error.message : String(error)}</p>
                 </div>
               </div>
             </div>

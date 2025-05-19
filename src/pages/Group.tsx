@@ -38,14 +38,14 @@ export default function Group() {
 
   return (
     <div className="group-page">
-      <h2>Group: {group.name}</h2>
+      <h2>{group.name}</h2>
       
       <div className="group-table">
         <table>
           <thead>
             <tr>
-              <th>Metadata Value</th>
-              <th>Count</th>
+              <th>{group.name}</th>
+              <th>Number of Devices</th>
             </tr>
           </thead>
           <tbody>

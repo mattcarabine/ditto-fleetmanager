@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import ReactFlow, { Background, Controls } from 'reactflow';
 import type { Node, Edge } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { useDitto } from '../contexts/RemoteQuery';
 
 interface PresenceGraphProps {
   presence: PresenceData[];
@@ -469,6 +468,7 @@ export default function PresenceGraph({ presence }: PresenceGraphProps) {
         
      
         Object.values(node.c).forEach((connectedPeer: any) => {
+          
           newEdges.push({
             id: `${node.d}-${connectedPeer.d}`,
             source: node.d,
